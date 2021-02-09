@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<configuration>
+    <property>
+        <name>hbase.rootdir</name>
+        <value>hdfs://hadoop102:8020/hbase</value>
+    </property>
+
+    <property>
+        <name>hbase.cluster.distributed</name>
+        <value>true</value>
+    </property>
+
+    <property>
+        <name>hbase.zookeeper.quorum</name>
+        <value>hadoop102,hadoop103,hadoop104</value>
+    </property>
+
+    <property>
+        <name>hbase.unsafe.stream.capability.enforce</name>
+        <value>false</value>
+    </property>
+
+    <property>
+        <name>hbase.wal.provider</name>
+        <value>filesystem</value>
+    </property>
+
+    <!-- phoenix master 配置参数 -->
+    <property>
+        <name>hbase.master.loadbalancer.class</name>
+        <value>org.apache.phoenix.hbase.index.balancer.IndexLoadBalancer</value>
+    </property>
+
+    <property>
+        <name>hbase.coprocessor.master.classes</name>
+        <value>org.apache.phoenix.hbase.index.master.IndexMasterObserver</value>
+    </property>
+
+    <!-- phoenix regionserver 配置参数 -->
+    <property>
+        <name>hbase.regionserver.wal.codec</name>
+        <value>org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec</value>
+    </property>
+
+    <property>
+        <name>hbase.region.server.rpc.scheduler.factory.class</name>
+        <value>org.apache.hadoop.hbase.ipc.PhoenixRpcSchedulerFactory</value>
+        <description>Factory to create the Phoenix RPC Scheduler that uses separate queues for index and metadata
+            updates
+        </description>
+    </property>
+
+    <property>
+        <name>hbase.rpc.controllerfactory.class</name>
+        <value>org.apache.hadoop.hbase.ipc.controller.ServerRpcControllerFactory</value>
+        <description>Factory to create the Phoenix RPC Scheduler that uses separate queues for index and metadata
+            updates
+        </description>
+    </property>
+
+    <property>
+        <name>phoenix.schema.isNamespaceMappingEnabled</name>
+        <value>true</value>
+    </property>
+
+    <property>
+        <name>phoenix.schema.mapSystemTablesToNamespace</name>
+        <value>true</value>
+    </property>
+
+</configuration>
