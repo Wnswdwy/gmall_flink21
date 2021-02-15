@@ -20,6 +20,14 @@ import java.text.SimpleDateFormat;
 /**
  * @author yycstart
  * @create 2021-02-13 17:50
+ *
+ *              第2章 DWM层 访客UV计算
+ *      2.1 需求分析与思路
+ *      UV，全称是Unique Visitor，即独立访客。对于实时计算中，也可以称为DAU(Daily Active User)，即每日活跃用户。
+ *   因为实时计算中的uv通常是指当日的访客数。
+ *      那么如何从用户行为日志中识别出当日的访客，那么有两点：
+ *      其一，是识别出该访客打开的第一个页面，表示这个访客开始进入我们的应用
+ *      其二，由于访客可以在一天中多次进入应用，所以我们要在一天的范围内进行去重。
  */
 public class UniqueVisitApp {
     public static void main(String[] args) {

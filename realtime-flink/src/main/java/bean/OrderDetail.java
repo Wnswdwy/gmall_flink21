@@ -21,8 +21,10 @@ public class OrderDetail {
     Long sku_num;
     String sku_name;
     String create_time;
+    Long create_ts;
     BigDecimal split_total_amount;
     BigDecimal split_activity_amount;
     BigDecimal split_coupon_amount;
+
 }
 
