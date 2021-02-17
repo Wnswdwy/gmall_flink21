@@ -2,15 +2,23 @@ package app.dwm;
 
 import bean.OrderDetail;
 import bean.OrderInfo;
+import bean.OrderWide;
 import com.alibaba.fastjson.JSON;
+import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.co.ProcessJoinFunction;
+import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
+import org.apache.flink.util.Collector;
+import org.apache.flink.util.OutputTag;
 import utils.MyKafkaUtil;
 
 import java.text.SimpleDateFormat;
@@ -88,6 +96,46 @@ public class OrderWideApp  {
                 return orderDetail;
             }
         });
+
+
+        /*
+            1.	增加事件时间水位线
+            2.	设定关联用的key
+            3.	使用intervalJoin合并成新对象
+
+         */
+
+        //增加事件时间水位线
+        SingleOutputStreamOperator<OrderInfo> orderInfoWithEventTimeDStream = OrderInfoDStream.assignTimestampsAndWatermarks(WatermarkStrategy.
+                <OrderInfo>forMonotonousTimestamps().withTimestampAssigner(new SerializableTimestampAssigner<OrderInfo>() {
+            @Override
+            public long extractTimestamp(OrderInfo orderInfo, long l) {
+                return orderInfo.getCreate_ts();
+            }
+        }));
+
+        SingleOutputStreamOperator<OrderDetail> orderDetailWithEventTimeDStream = orderDetailDStream.assignTimestampsAndWatermarks(WatermarkStrategy.<OrderDetail>forMonotonousTimestamps().withTimestampAssigner(new SerializableTimestampAssigner<OrderDetail>() {
+            @Override
+            public long extractTimestamp(OrderDetail orderDetail, long l) {
+
+                return orderDetail.getCreate_ts();
+            }
+        }));
+
+        //设定关联用的key
+        KeyedStream<OrderInfo, Long> orderInfoKeyedDStream = orderInfoWithEventTimeDStream.keyBy(orderInfo -> orderInfo.getId());
+        KeyedStream<OrderDetail, Long> orderDetailKeyedDStream = orderDetailWithEventTimeDStream.keyBy(orderDetail -> orderDetail.getOrder_id());
+
+
+        //使用intervalJoin合并成新对象
+        SingleOutputStreamOperator<OrderWide> orderWideDStream = orderInfoKeyedDStream.intervalJoin(orderDetailKeyedDStream)
+                .between(Time.seconds(-5), Time.seconds(5)).process(new ProcessJoinFunction<OrderInfo, OrderDetail, OrderWide>() {
+                    @Override
+                    public void processElement(OrderInfo orderInfo, OrderDetail orderDetail, Context context, Collector<OrderWide> collector) throws Exception {
+                        collector.collect(new OrderWide(orderInfo, orderDetail));
+                    }
+                });
+        orderWideDStream.print("Joined ::");
 
         //打印
         orderDetailDStream.print();
